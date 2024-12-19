@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chill Guy Clicker</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: white;
+            background: radial-gradient(circle at center, white, white 70%, #87CEEB 85%, #FFD700);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #welcome-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 50px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        #welcome-screen h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+
+        #welcome-screen button {
+            font-size: 1.2em;
+            padding: 10px 20px;
+            background-color: #FFD700;
+            color: #333;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #welcome-screen button:hover {
+            background-color: #FFC107;
+        }
+
+        #game {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        #coins {
+            font-size: 4em;
+            font-weight: bold;
+            color: #FFD700;
+            text-shadow: 2px 2px 5px #333;
+            margin: 20px 0;
+            font-family: 'Trebuchet MS', sans-serif;
+            background: -webkit-linear-gradient(#FFD700, #FFA500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        #chill-guy {
+            width: 350px;
+            cursor: pointer;
+            transition: transform 0.1s ease-in-out;
+            position: absolute;
+            bottom: 40%;
+        }
+
+        #chill-guy:active {
+            transform: scale(1.1);
+        }
+
+        .coin-effect {
+            position: absolute;
+            font-size: 2em;
+            color: #FFD700;
+            pointer-events: none;
+            animation: floatUp 1s ease-in;
+        }
+
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-100px); }
+        }
+
+        #upgrades {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .upgrade {
+            margin: 10px 0;
+            padding: 10px 20px;
+            background-color: #FFD700;
+            color: #fff;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s ease-in-out, background-color 0.3s;
+        }
+
+        .upgrade:disabled {
+            background-color: #ccc;
+            color: #888;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .upgrade:hover:not(:disabled) {
+            background-color: #FFC107;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+<div id="welcome-screen">
+    <h1>Welcome to Chill Guy Clicker</h1>
+    <button id="start-game">Start</button>
+</div>
+
+<div id="game">
+    <div id="coins">0</div>
+    <img id="chill-guy" src="https://therecenttimes.com/wp-content/uploads/2024/11/meme-1024x639.webp" alt="Chill Guy">
+
+    <div id="upgrades"></div>
+</div>
+
+<script>
+    const welcomeScreen = document.getElementById('welcome-screen');
+    const startGameButton = document.getElementById('start-game');
+    const gameScreen = document.getElementById('game');
+    const coinsElement = document.getElementById('coins');
+    const chillGuyImage = document.getElementById('chill-guy');
+    const upgradesContainer = document.getElementById('upgrades');
+
+    let coins = 0;
+    let clickPower = 1;
+
+    const upgrades = [
+        { id: 'autoClick', name: 'Auto Click', cost: 10, cps: 1, increment: () => autoClick(1) },
+        { id: 'powerClick', name: 'Power Click x2', cost: 50, cps: 0, increment: () => powerClick(2) },
+    ];
+
+    function autoClick(cps) {
+        setInterval(() => {
+            coins += cps;
+            updateDisplay();
+        }, 1000);
+    }
+
+    function powerClick(multiplier) {
+        clickPower *= multiplier;
+    }
+
+    function addUpgrade(upgrade) {
+        const button = document.createElement('button');
+        button.classList.add('upgrade');
+        button.id = upgrade.id;
+        button.textContent = `${upgrade.name} (Cost: ${upgrade.cost})`;
+        button.disabled = coins < upgrade.cost;
+
+        button.addEventListener('click', () => {
+            if (coins >= upgrade.cost) {
+                coins -= upgrade.cost;
+                upgrade.cost = Math.ceil(upgrade.cost * 1.5);
+                upgrade.increment();
+                updateDisplay();
+                button.textContent = `${upgrade.name} (Cost: ${upgrade.cost})`;
+            }
+        });
+
+        upgradesContainer.appendChild(button);
+    }
+
+    function updateDisplay() {
+        coinsElement.textContent = coins;
+        document.querySelectorAll('.upgrade').forEach(button => {
+            const upgrade = upgrades.find(u => u.id === button.id);
+            button.disabled = coins < upgrade.cost;
+        });
+    }
+
+    function spawnCoinEffect(x, y) {
+        const coin = document.createElement('div');
+        coin.classList.add('coin-effect');
+        coin.textContent = '💰';
+        coin.style.left = `${x}px`;
+        coin.style.top = `${y}px`;
+        document.body.appendChild(coin);
+
+        setTimeout(() => coin.remove(), 1000);
+    }
+
+    chillGuyImage.addEventListener('click', (e) => {
+        coins += clickPower;
+        updateDisplay();
+        spawnCoinEffect(e.clientX, e.clientY);
+    });
+
+    startGameButton.addEventListener('click', () => {
+        welcomeScreen.style.display = 'none';
+        gameScreen.style.display = 'flex';
+    });
+
+    upgrades.forEach(upgrade => addUpgrade(upgrade));
+
+    updateDisplay();
+</script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
